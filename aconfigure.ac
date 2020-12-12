@@ -1677,8 +1677,7 @@ AC_ARG_ENABLE(darwin-ssl,
 	            LIBS="-framework Security"
 		    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Security/SecureTransport.h>]],
 			[if (__builtin_available(macOS 10.12, iOS 10.0, *)) {
-			     SSLContextRef ssl_ctx;
-			     SSLReHandshake(ssl_ctx);
+				nw_protocol_definition_t def = nw_protocol_copy_tls_definition();
 			 }])],
 			[ac_ssl_backend=darwin],)
 		    CFLAGS="$SAVED_CFLAGS"

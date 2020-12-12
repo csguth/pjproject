@@ -8086,13 +8086,12 @@ else
 	            LIBS="-framework Security"
 		    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <Security/SecureTransport.h>
+#include <Network/Network.h>
 int
 main ()
 {
 if (__builtin_available(macOS 10.12, iOS 10.0, *)) {
-			     SSLContextRef ssl_ctx;
-			     SSLReHandshake(ssl_ctx);
+          nw_protocol_definition_t def = nw_protocol_copy_tls_definition();
 			 }
   ;
   return 0;
