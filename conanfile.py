@@ -4,11 +4,8 @@ class PjprojectConan(ConanFile):
     name = "pjproject"
     version = "2.10-dev"
     settings = "os", "compiler", "build_type", "arch"
-    description = "<Description of Pjproject here>"
-    url = "None"
-    license = "None"
-    author = "None"
-    topics = None
+    license = "GPL"
+    author = "Chrystian Guth"
     exports_sources = "*"
     options = {
         "floating-point" : [True, False],
@@ -78,18 +75,20 @@ class PjprojectConan(ConanFile):
         disabled = map(lambda x: x[0], disabled)
         disabled_args = map(lambda x: f"--disable-{x}", disabled)
         args.extend(disabled_args)
-        abe.configure(args=args)
+        
+        build = "arm-apple-darwin" if self.settings.arch == "arm64" and self.settings.os == "Macos" else None
+        
+        abe.configure(args=args, build=build)
 
         return abe
 
     def build(self):
-        self.run("pwd")
-        self.run("ls")
         self.build_env().make(target="dep")
         self.build_env().make()
 
     def package(self):
-        self.build_env().install()
+        self.build_env().make(target="install")
 
     def package_info(self):
         self.cpp_info.libs = tools.collect_libs(self)
+        self.cpp_info.defines = ["arm"]
