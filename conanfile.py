@@ -67,6 +67,9 @@ class PjprojectConan(ConanFile):
         "libwebrtc" : False
     }
 
+    def is_apple_silicon(self):
+        return self.settings.arch == "arm64" and self.settings.os == "Macos"
+
     def build_env(self):
         abe = AutoToolsBuildEnvironment(self)
         args = []
@@ -76,7 +79,7 @@ class PjprojectConan(ConanFile):
         disabled_args = map(lambda x: f"--disable-{x}", disabled)
         args.extend(disabled_args)
         
-        build = "arm-apple-darwin" if self.settings.arch == "arm64" and self.settings.os == "Macos" else None
+        build = "arm-apple-darwin" if self.is_apple_silicon() else None
         
         abe.configure(args=args, build=build)
 
@@ -91,4 +94,12 @@ class PjprojectConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = tools.collect_libs(self)
-        self.cpp_info.defines = ["arm"]
+
+        defines = []
+        defines.extend([
+            "ARM",
+            "PJ_IS_LITTLE_ENDIAN=1",
+            "PJ_IS_BIG_ENDIAN=0"
+        ] if self.is_apple_silicon() else [])
+
+        self.cpp_info.defines.extend(defines)

@@ -20,9 +20,6 @@ include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
 add_executable(main main.cpp)
-target_compile_definitions(main PUBLIC -DARM)
-target_compile_definitions(main PUBLIC -DPJ_IS_LITTLE_ENDIAN=1)
-target_compile_definitions(main PUBLIC -DPJ_IS_BIG_ENDIAN=0)
 
 target_link_libraries(main CONAN_PKG::pjproject)
 
