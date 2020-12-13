@@ -1699,8 +1699,19 @@ static CFDictionaryRef get_cert_oid(SecCertificateRef cert, CFStringRef oid,
     			    &kCFTypeArrayCallBacks);
 
     vals = SecCertificateCopyValues(cert, key_arr, NULL);
-    dict = CFDictionaryGetValue(vals, key[0]);
-    *value = CFDictionaryGetValue(dict, kSecPropertyKeyValue);
+    if (vals)
+    {
+        dict = CFDictionaryGetValue(vals, key[0]);
+        if (dict)
+        {
+            CFTypeRef valueRead = CFDictionaryGetValue(dict, kSecPropertyKeyValue);
+            if (valueRead)
+            {
+                *value = valueRead;
+                CFBridgingRelease(valueRead);
+            }
+        }
+    }
 
     CFRelease(key_arr);
 
@@ -1871,7 +1882,7 @@ static void get_cert_info(pj_pool_t *pool, pj_ssl_cert_info *ci,
     CFIndex i;
 
     dict = get_cert_oid(cert, kSecOIDSubjectAltName, (CFTypeRef *)&altname);
-    if (!dict || !CFArrayGetCount(altname))
+    if (!dict || !altname || !CFArrayGetCount(altname))
     	return;
 
     ci->subj_alt_name.entry = pj_pool_calloc(pool, CFArrayGetCount(altname),

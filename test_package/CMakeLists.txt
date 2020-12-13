@@ -23,9 +23,11 @@ add_executable(main main.cpp)
 
 target_link_libraries(main CONAN_PKG::pjproject)
 
-ADD_OSX_FRAMEWORK(CoreAudio main)
 ADD_OSX_FRAMEWORK(AudioUnit main)
 ADD_OSX_FRAMEWORK(AudioToolbox main)
+ADD_OSX_FRAMEWORK(CoreAudio main)
 ADD_OSX_FRAMEWORK(CoreFoundation main)
-  
+ADD_OSX_FRAMEWORK(Foundation main)
+ADD_OSX_FRAMEWORK(Network main)
+ADD_OSX_FRAMEWORK(Security main)
      

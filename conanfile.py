@@ -3,7 +3,7 @@ from conans import ConanFile, tools, AutoToolsBuildEnvironment
 class PjprojectConan(ConanFile):
     name = "pjproject"
     version = "2.10-dev"
-    settings = "os", "compiler", "build_type", "arch"
+    settings = "os", "compiler", "build_type", "arch", "arch_build"
     license = "GPL"
     author = "Chrystian Guth"
     exports_sources = "*"
@@ -74,20 +74,45 @@ class PjprojectConan(ConanFile):
         abe = AutoToolsBuildEnvironment(self)
         args = []
 
-        disabled = filter(lambda x: x[1] == 'False', self.options.items())
-        disabled = map(lambda x: x[0], disabled)
-        disabled_args = map(lambda x: f"--disable-{x}", disabled)
-        args.extend(disabled_args)
+        enabled_disabled_args = map(lambda x: f"""--{"dis" if x[1] == "False" else "en"}able-{x[0]}""", self.options.items())
+        args.extend(enabled_disabled_args)
+
+        args.extend(["--enable-darwin-ssl"] if self.is_apple_silicon() else [])
         
         build = "arm-apple-darwin" if self.is_apple_silicon() else None
-        
+
+        defines = [
+            "ARM",
+            "PJ_IS_LITTLE_ENDIAN=1",
+            "PJ_IS_BIG_ENDIAN=0",
+            "PJ_HAS_SSL_SOCK=1",
+            "PJ_SSL_SOCK_IMP=PJ_SSL_SOCK_IMP_APPLE",
+            "PJSIP_HAS_TLS_TRANSPORT=1",
+            "PJMEDIA_ILBC_CODEC_USE_COREAUDIO=1",
+            "PJMEDIA_HAS_ILBC_CODEC=1",
+            "PJMEDIA_AUDIO_DEV_HAS_COREAUDIO=1",
+            "PJMEDIA_AUDIO_DEV_HAS_WMME=0",
+            "PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0",
+            "PJ_HAS_FLOATING_POINT=1",
+            "PJMEDIA_HAS_SPEEX_AEC=0"
+        ] if self.is_apple_silicon() else []
+
+        abe.defines.extend(defines)
+
         abe.configure(args=args, build=build)
 
+
+        # command = f"""CFLAGS="{flags}" CXXFLAGS="{flags}" LDFLAGS="{flags}" ./configure {build} {" ".join(args)}"""
+        
+        # self.output.info(command)
+
+        # with tools.environment_append(abe.vars):
+        #     self.run(command)
         return abe
 
     def build(self):
         self.build_env().make(target="dep")
-        self.build_env().make()
+        self.build_env().make(target="lib")
 
     def package(self):
         self.build_env().make(target="install")
@@ -96,10 +121,23 @@ class PjprojectConan(ConanFile):
         self.cpp_info.libs = tools.collect_libs(self)
 
         defines = []
-        defines.extend([
-            "ARM",
-            "PJ_IS_LITTLE_ENDIAN=1",
-            "PJ_IS_BIG_ENDIAN=0"
-        ] if self.is_apple_silicon() else [])
+        defines.extend(
+            [
+                "ARM",
+                "PJ_IS_LITTLE_ENDIAN=1",
+                "PJ_IS_BIG_ENDIAN=0",
+                "PJ_HAS_SSL_SOCK=1",
+                "PJ_SSL_SOCK_IMP=PJ_SSL_SOCK_IMP_APPLE",
+                "PJSIP_HAS_TLS_TRANSPORT=1",
+                "PJMEDIA_ILBC_CODEC_USE_COREAUDIO=1",
+                "PJMEDIA_HAS_ILBC_CODEC=1",
+                "PJMEDIA_AUDIO_DEV_HAS_COREAUDIO=1",
+                "PJMEDIA_AUDIO_DEV_HAS_WMME=0",
+                "PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0",
+                "PJ_HAS_FLOATING_POINT=1",
+                "PJMEDIA_HAS_SPEEX_AEC=0"
+            ]
+        )
 
         self.cpp_info.defines.extend(defines)
+        
