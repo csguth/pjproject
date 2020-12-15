@@ -67,21 +67,12 @@ class PjprojectConan(ConanFile):
         "libwebrtc" : False
     }
 
-    def is_apple_silicon(self):
-        return self.settings.arch == "arm64" and self.settings.os == "Macos"
+    def requirements(self):
+        self.requires("libsrtp/2.3.0-dev")
 
-    def build_env(self):
-        abe = AutoToolsBuildEnvironment(self)
-        args = []
-
-        enabled_disabled_args = map(lambda x: f"""--{"dis" if x[1] == "False" else "en"}able-{x[0]}""", self.options.items())
-        args.extend(enabled_disabled_args)
-
-        args.extend(["--enable-darwin-ssl"] if self.is_apple_silicon() else [])
-        
-        build = "arm-apple-darwin" if self.is_apple_silicon() else None
-
-        defines = [
+    @property
+    def defines(self):
+        return [
             "ARM",
             "PJ_IS_LITTLE_ENDIAN=1",
             "PJ_IS_BIG_ENDIAN=0",
@@ -95,19 +86,21 @@ class PjprojectConan(ConanFile):
             "PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0",
             "PJ_HAS_FLOATING_POINT=1",
             "PJMEDIA_HAS_SPEEX_AEC=0"
-        ] if self.is_apple_silicon() else []
+        ]
 
-        abe.defines.extend(defines)
+    def build_env(self):
+        abe = AutoToolsBuildEnvironment(self)
+        args = []
 
-        abe.configure(args=args, build=build)
+        enabled_disabled_args = map(lambda x: f"""--{"dis" if x[1] == "False" else "en"}able-{x[0]}""", self.options.items())
+        args.extend(enabled_disabled_args)
 
+        args.extend(["--enable-darwin-ssl"] if self.settings.os == "Macos" else [])
+        args.append("--with-external-srtp")        
 
-        # command = f"""CFLAGS="{flags}" CXXFLAGS="{flags}" LDFLAGS="{flags}" ./configure {build} {" ".join(args)}"""
-        
-        # self.output.info(command)
+        abe.defines.extend(self.defines)    
+        abe.configure(args=args)
 
-        # with tools.environment_append(abe.vars):
-        #     self.run(command)
         return abe
 
     def build(self):
@@ -119,25 +112,5 @@ class PjprojectConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = tools.collect_libs(self)
-
-        defines = []
-        defines.extend(
-            [
-                "ARM",
-                "PJ_IS_LITTLE_ENDIAN=1",
-                "PJ_IS_BIG_ENDIAN=0",
-                "PJ_HAS_SSL_SOCK=1",
-                "PJ_SSL_SOCK_IMP=PJ_SSL_SOCK_IMP_APPLE",
-                "PJSIP_HAS_TLS_TRANSPORT=1",
-                "PJMEDIA_ILBC_CODEC_USE_COREAUDIO=1",
-                "PJMEDIA_HAS_ILBC_CODEC=1",
-                "PJMEDIA_AUDIO_DEV_HAS_COREAUDIO=1",
-                "PJMEDIA_AUDIO_DEV_HAS_WMME=0",
-                "PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0",
-                "PJ_HAS_FLOATING_POINT=1",
-                "PJMEDIA_HAS_SPEEX_AEC=0"
-            ]
-        )
-
-        self.cpp_info.defines.extend(defines)
-        
+        self.cpp_info.defines.extend(self.defines)
+        self.output.info(self.cpp_info.defines)
