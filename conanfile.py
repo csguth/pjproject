@@ -121,4 +121,16 @@ class PjprojectConan(ConanFile):
     def package_info(self):
         self.cpp_info.libs = tools.collect_libs(self)
         self.cpp_info.defines.extend(self.defines)
-        self.output.info(self.cpp_info.defines)
+        self.cpp_info.frameworks.extend([
+            "AudioUnit",
+            "AudioToolbox",
+            "AVFoundation",
+            "CoreAudio",
+            "CoreFoundation",
+            "CoreMedia",
+            "CoreVideo",
+            "Foundation",
+            "Network",
+            "Security",
+            "VideoToolbox"
+        ])
