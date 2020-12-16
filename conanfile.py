@@ -89,7 +89,9 @@ class PjprojectConan(ConanFile):
             "PJMEDIA_HAS_VIDEO=1",
             "PJMEDIA_HAS_VID_TOOLBOX_CODEC=1",
             "PJMEDIA_VIDEO_DEV_HAS_DARWIN=1",
-            "PJMEDIA_CREATE_LISTENER=0"
+            "PJSIP_TLS_TRANSPORT_DONT_CREATE_LISTENER=1",
+            "PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER=1",
+            "PJSIP_UDP_TRANSPORT_DONT_CREATE_LISTENER=1"
         ]
 
     def build_env(self):
