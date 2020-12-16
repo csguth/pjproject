@@ -86,6 +86,10 @@ class PjprojectConan(ConanFile):
             "PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO=0",
             "PJ_HAS_FLOATING_POINT=1",
             "PJMEDIA_HAS_SPEEX_AEC=0"
+            "PJMEDIA_HAS_VIDEO=1",
+            "PJMEDIA_HAS_VID_TOOLBOX_CODEC=1",
+            "PJMEDIA_VIDEO_DEV_HAS_DARWIN=1",
+            "PJMEDIA_CREATE_LISTENER=0"
         ]
 
     def build_env(self):
