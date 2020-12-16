@@ -99,7 +99,11 @@ class PjprojectConan(ConanFile):
         args.append("--with-external-srtp")        
 
         abe.defines.extend(self.defines)    
-        abe.configure(args=args)
+
+        env = abe.vars
+        env["CFLAGS"] = " ".join(map(lambda x: f"""-I{x}""" , self.deps_cpp_info["libsrtp"].include_paths))
+        env["CXXFLAGS"] = " ".join(map(lambda x: f"""-I{x}""" , self.deps_cpp_info["libsrtp"].include_paths))
+        abe.configure(args=args, vars=env)
 
         return abe
 
