@@ -1,9 +1,10 @@
 from conans import ConanFile, tools, AutoToolsBuildEnvironment
+import shutil
 
 class PjprojectConan(ConanFile):
     name = "pjproject"
     version = "2.10-dev"
-    settings = "os", "compiler", "build_type", "arch", "arch_build"
+    settings = "os", "compiler", "build_type", "arch", "os_build"
     license = "GPL"
     author = "Chrystian Guth"
     exports_sources = "*"
@@ -72,7 +73,7 @@ class PjprojectConan(ConanFile):
 
     @property
     def defines(self):
-        return [
+        defines = [
             "ARM",
             "PJ_IS_LITTLE_ENDIAN=1",
             "PJ_IS_BIG_ENDIAN=0",
@@ -91,8 +92,11 @@ class PjprojectConan(ConanFile):
             "PJMEDIA_VIDEO_DEV_HAS_DARWIN=1",
             "PJSIP_TLS_TRANSPORT_DONT_CREATE_LISTENER=1",
             "PJSIP_TCP_TRANSPORT_DONT_CREATE_LISTENER=1",
-            "PJSIP_UDP_TRANSPORT_DONT_CREATE_LISTENER=1"
+            "PJSIP_UDP_TRANSPORT_DONT_CREATE_LISTENER=1",
         ]
+        defines.extend(["PJ_CONFIG_IPHONE=1", "PJMEDIA_VIDEO_DEV_HAS_IOS_OPENGL=0"] if self.settings.os == "iOS" else [])
+        return defines
+
 
     def build_env(self):
         abe = AutoToolsBuildEnvironment(self)
@@ -109,7 +113,17 @@ class PjprojectConan(ConanFile):
         env = abe.vars
         env["CFLAGS"] = " ".join(map(lambda x: f"""-I{x}""" , self.deps_cpp_info["libsrtp"].include_paths))
         env["CXXFLAGS"] = " ".join(map(lambda x: f"""-I{x}""" , self.deps_cpp_info["libsrtp"].include_paths))
-        abe.configure(args=args, vars=env)
+
+        host = None
+        build = None
+        
+        if self.settings.arch == "armv8" and self.settings.os_build == "Macos":
+            build="arm64-apple-darwin_macos"
+            host="arm64-apple-darwin_ios" if self.settings.os == "iOS" else  "arm64-apple-darwin_macos"
+
+        if self.settings.os == "iOS":
+            shutil.copy(src="configure-iphone", dst="configure")
+        abe.configure(args=args, vars=env, build=build, host=host)
 
         return abe
 
@@ -124,15 +138,18 @@ class PjprojectConan(ConanFile):
         self.cpp_info.libs = tools.collect_libs(self)
         self.cpp_info.defines.extend(self.defines)
         self.cpp_info.frameworks.extend([
-            "AudioUnit",
             "AudioToolbox",
             "AVFoundation",
+            "CFNetwork",
             "CoreAudio",
             "CoreFoundation",
+            "CoreGraphics",
             "CoreMedia",
             "CoreVideo",
             "Foundation",
             "Network",
+            "QuartzCore",
             "Security",
             "VideoToolbox"
         ])
+        self.cpp_info.frameworks.extend(["UIKit"] if self.settings.os == "iOS" else []) 
